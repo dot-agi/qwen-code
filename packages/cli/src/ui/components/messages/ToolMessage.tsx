@@ -30,6 +30,7 @@ import {
   TOOL_STATUS,
 } from '../../constants.js';
 import { theme } from '../../semantic-colors.js';
+import { useSettings } from '../../contexts/SettingsContext.js';
 
 const STATIC_HEIGHT = 1;
 const RESERVED_LINE_COUNT = 5; // for tool name, status, padding etc.
@@ -219,6 +220,52 @@ const DiffResultRenderer: React.FC<{
   />
 );
 
+const MCP_SUMMARY_MAX_LINES = 3;
+const MCP_SUMMARY_MAX_CHARS = 200;
+
+/**
+ * Component to render a summary view of MCP tool output.
+ * Shows only the first few lines/characters of the result.
+ */
+const McpSummaryRenderer: React.FC<{
+  data: string | undefined;
+  childWidth: number;
+}> = ({ data, childWidth }) => {
+  if (!data) {
+    return (
+      <Text color={theme.text.secondary} dimColor>
+        {'(output hidden - set mcp.outputMode to "full" to see)'}
+      </Text>
+    );
+  }
+
+  // Truncate to first few lines and characters
+  const lines = data.split('\n').slice(0, MCP_SUMMARY_MAX_LINES);
+  let summary = lines.join('\n');
+  if (summary.length > MCP_SUMMARY_MAX_CHARS) {
+    summary = summary.slice(0, MCP_SUMMARY_MAX_CHARS);
+  }
+
+  const wasTruncated =
+    data.split('\n').length > MCP_SUMMARY_MAX_LINES ||
+    data.length > MCP_SUMMARY_MAX_CHARS;
+
+  return (
+    <MaxSizedBox maxHeight={MCP_SUMMARY_MAX_LINES + 1} maxWidth={childWidth}>
+      <Box flexDirection="column">
+        <Text wrap="wrap" color={theme.text.primary}>
+          {summary}
+          {wasTruncated && (
+            <Text color={theme.text.secondary} dimColor>
+              {' ... (truncated - set mcp.outputMode to "full" to see all)'}
+            </Text>
+          )}
+        </Text>
+      </Box>
+    </MaxSizedBox>
+  );
+};
+
 export interface ToolMessageProps extends IndividualToolCallDisplay {
   availableTerminalHeight?: number;
   contentWidth: number;
@@ -243,6 +290,17 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
   ptyId,
   config,
 }) => {
+  const settings = useSettings();
+  const mcpOutputMode =
+    (settings.merged.mcp?.outputMode as
+      | 'full'
+      | 'summary'
+      | 'hidden'
+      | undefined) ?? 'full';
+
+  // Check if this is an MCP tool by looking for "MCP Server" in the description
+  const isMcpTool = description?.includes('MCP Server') ?? false;
+
   const isThisShellFocused =
     (name === SHELL_COMMAND_NAME || name === 'Shell') &&
     status === ToolCallStatus.Executing &&
@@ -322,51 +380,65 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
         )}
         {emphasis === 'high' && <TrailingIndicator />}
       </Box>
-      {displayRenderer.type !== 'none' && (
-        <Box paddingLeft={STATUS_INDICATOR_WIDTH} width="100%" marginTop={1}>
-          <Box flexDirection="column">
-            {displayRenderer.type === 'todo' && (
-              <TodoResultRenderer data={displayRenderer.data} />
-            )}
-            {displayRenderer.type === 'plan' && (
-              <PlanResultRenderer
-                data={displayRenderer.data}
-                availableHeight={availableHeight}
-                childWidth={innerWidth}
-              />
-            )}
-            {displayRenderer.type === 'task' && config && (
-              <SubagentExecutionRenderer
-                data={displayRenderer.data}
-                availableHeight={availableHeight}
-                childWidth={innerWidth}
-                config={config}
-              />
-            )}
-            {displayRenderer.type === 'diff' && (
-              <DiffResultRenderer
-                data={displayRenderer.data}
-                availableHeight={availableHeight}
-                childWidth={innerWidth}
-              />
-            )}
-            {displayRenderer.type === 'ansi' && (
-              <AnsiOutputText
-                data={displayRenderer.data}
-                availableTerminalHeight={availableHeight}
-              />
-            )}
-            {displayRenderer.type === 'string' && (
-              <StringResultRenderer
-                data={displayRenderer.data}
-                renderAsMarkdown={renderOutputAsMarkdown}
-                availableHeight={availableHeight}
-                childWidth={innerWidth}
-              />
-            )}
+      {displayRenderer.type !== 'none' &&
+        !(isMcpTool && mcpOutputMode === 'hidden') && (
+          <Box paddingLeft={STATUS_INDICATOR_WIDTH} width="100%" marginTop={1}>
+            <Box flexDirection="column">
+              {isMcpTool && mcpOutputMode === 'summary' ? (
+                <McpSummaryRenderer
+                  data={
+                    displayRenderer.type === 'string'
+                      ? displayRenderer.data
+                      : undefined
+                  }
+                  childWidth={innerWidth}
+                />
+              ) : (
+                <>
+                  {displayRenderer.type === 'todo' && (
+                    <TodoResultRenderer data={displayRenderer.data} />
+                  )}
+                  {displayRenderer.type === 'plan' && (
+                    <PlanResultRenderer
+                      data={displayRenderer.data}
+                      availableHeight={availableHeight}
+                      childWidth={innerWidth}
+                    />
+                  )}
+                  {displayRenderer.type === 'task' && config && (
+                    <SubagentExecutionRenderer
+                      data={displayRenderer.data}
+                      availableHeight={availableHeight}
+                      childWidth={innerWidth}
+                      config={config}
+                    />
+                  )}
+                  {displayRenderer.type === 'diff' && (
+                    <DiffResultRenderer
+                      data={displayRenderer.data}
+                      availableHeight={availableHeight}
+                      childWidth={innerWidth}
+                    />
+                  )}
+                  {displayRenderer.type === 'ansi' && (
+                    <AnsiOutputText
+                      data={displayRenderer.data}
+                      availableTerminalHeight={availableHeight}
+                    />
+                  )}
+                  {displayRenderer.type === 'string' && (
+                    <StringResultRenderer
+                      data={displayRenderer.data}
+                      renderAsMarkdown={renderOutputAsMarkdown}
+                      availableHeight={availableHeight}
+                      childWidth={innerWidth}
+                    />
+                  )}
+                </>
+              )}
+            </Box>
           </Box>
-        </Box>
-      )}
+        )}
       {isThisShellFocused && config && (
         <Box paddingLeft={STATUS_INDICATOR_WIDTH} marginTop={1}>
           <ShellInputPrompt

@@ -965,6 +965,21 @@ const SETTINGS_SCHEMA = {
         description: 'A list of MCP servers to exclude.',
         showInDialog: false,
       },
+      outputMode: {
+        type: 'string',
+        label: 'MCP Output Mode',
+        category: 'MCP',
+        requiresRestart: false,
+        default: 'full' as 'full' | 'summary' | 'hidden',
+        description:
+          'Controls how MCP tool output is displayed. "full" shows all output, "summary" shows only tool name and parameters, "hidden" hides the output entirely.',
+        showInDialog: true,
+        options: [
+          { value: 'full', label: 'Full output' },
+          { value: 'summary', label: 'Summary only' },
+          { value: 'hidden', label: 'Hidden' },
+        ],
+      },
     },
   },
   useSmartEdit: {
