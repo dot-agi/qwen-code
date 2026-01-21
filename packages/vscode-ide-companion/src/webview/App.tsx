@@ -42,7 +42,11 @@ import {
 } from './components/messages/index.js';
 import { InputForm } from './components/layout/InputForm.js';
 import { SessionSelector } from './components/layout/SessionSelector.js';
-import { FileIcon, UserIcon } from './components/icons/index.js';
+import {
+  FileIcon,
+  UserIcon,
+  WarningTriangleIcon,
+} from './components/icons/index.js';
 import { ApprovalMode, NEXT_APPROVAL_MODE } from '../types/acpTypes.js';
 import type { ApprovalModeValue } from '../types/approvalModeValueTypes.js';
 import type { PlanEntry, UsageStatsPayload } from '../types/chatTypes.js';
@@ -154,6 +158,13 @@ export const App: React.FC = () => {
             description: 'Login to Qwen Code',
             type: 'command',
             icon: <UserIcon />,
+          },
+          {
+            id: 'bug',
+            label: '/bug',
+            description: 'Submit a bug report',
+            type: 'command',
+            icon: <WarningTriangleIcon />,
           },
         ];
 
@@ -456,6 +467,11 @@ export const App: React.FC = () => {
         const command = (item.label || '').trim();
         if (command === '/login') {
           vscode.postMessage({ type: 'login', data: {} });
+          completion.closeCompletion();
+          return;
+        }
+        if (command === '/bug') {
+          vscode.postMessage({ type: 'bug', data: {} });
           completion.closeCompletion();
           return;
         }

@@ -11,6 +11,7 @@ import { SessionMessageHandler } from './SessionMessageHandler.js';
 import { FileMessageHandler } from './FileMessageHandler.js';
 import { EditorMessageHandler } from './EditorMessageHandler.js';
 import { AuthMessageHandler } from './AuthMessageHandler.js';
+import { BugMessageHandler } from './BugMessageHandler.js';
 
 /**
  * Message Router
@@ -62,12 +63,20 @@ export class MessageRouter {
       sendToWebView,
     );
 
+    const bugHandler = new BugMessageHandler(
+      agentManager,
+      conversationStore,
+      currentConversationId,
+      sendToWebView,
+    );
+
     // Register handlers in order of priority
     this.handlers = [
       this.sessionHandler,
       fileHandler,
       editorHandler,
       this.authHandler,
+      bugHandler,
     ];
   }
 
