@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BugMessageHandler } from './BugMessageHandler.js';
 
 // Mock vscode
@@ -42,6 +42,10 @@ describe('BugMessageHandler', () => {
       null,
       mockSendToWebView,
     );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('canHandle', () => {
