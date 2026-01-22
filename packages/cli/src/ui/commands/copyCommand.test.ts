@@ -117,7 +117,6 @@ describe('copyCommand', () => {
 
     const result = await copyCommand.action(mockContext, '');
 
-    // 'Hi there! How can I help you?' = 29 chars, 1 line
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
@@ -145,7 +144,6 @@ describe('copyCommand', () => {
     const result = await copyCommand.action(mockContext, '');
 
     expect(mockCopyToClipboard).toHaveBeenCalledWith('Part 1: Part 2: Part 3');
-    // 'Part 1: Part 2: Part 3' = 22 chars, 1 line
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
@@ -161,7 +159,7 @@ describe('copyCommand', () => {
         role: 'model',
         parts: [
           { text: 'Text part' },
-          { image: 'base64data' }, // Non-text part
+          { image: 'base64data' },
           { text: ' more text' },
         ],
       },
@@ -173,7 +171,6 @@ describe('copyCommand', () => {
     const result = await copyCommand.action(mockContext, '');
 
     expect(mockCopyToClipboard).toHaveBeenCalledWith('Text part more text');
-    // 'Text part more text' = 19 chars, 1 line
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
@@ -205,7 +202,6 @@ describe('copyCommand', () => {
     const result = await copyCommand.action(mockContext, '');
 
     expect(mockCopyToClipboard).toHaveBeenCalledWith('Second AI response');
-    // 'Second AI response' = 18 chars, 1 line
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
@@ -265,7 +261,7 @@ describe('copyCommand', () => {
     const historyWithEmptyParts = [
       {
         role: 'model',
-        parts: [{ image: 'base64data' }], // No text parts
+        parts: [{ image: 'base64data' }],
       },
     ];
 
@@ -303,7 +299,6 @@ describe('copyCommand', () => {
   it('should format large content with k chars notation', async () => {
     if (!copyCommand.action) throw new Error('Command has no action');
 
-    // Generate content over 1000 chars
     const largeContent = 'x'.repeat(1500) + '\n' + 'y'.repeat(500);
     const historyWithLargeContent = [
       {
@@ -317,7 +312,6 @@ describe('copyCommand', () => {
 
     const result = await copyCommand.action(mockContext, '');
 
-    // 2001 chars (1500 + 1 newline + 500), 2 lines
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
@@ -341,7 +335,6 @@ describe('copyCommand', () => {
 
     const result = await copyCommand.action(mockContext, '');
 
-    // 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5' = 34 chars, 5 lines
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
