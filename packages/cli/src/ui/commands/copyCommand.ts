@@ -41,7 +41,6 @@ export const copyCommand: SlashCommand = {
       try {
         await copyToClipboard(lastAiOutput);
 
-        // Provide helpful feedback about content size
         const charCount = lastAiOutput.length;
         const lineCount = lastAiOutput.split('\n').length;
         const sizeInfo =
