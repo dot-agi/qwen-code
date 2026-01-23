@@ -304,8 +304,8 @@ describe('<ToolMessage />', () => {
   describe('MCP output mode', () => {
     const mcpToolProps: ToolMessageProps = {
       callId: 'mcp-tool-123',
-      name: 'web-search',
-      description: 'web_search (web-search MCP Server)',
+      name: 'web_search (web-search MCP Server)',
+      description: 'Search the web for information',
       resultDisplay: 'This is a very long search result with lots of text...',
       status: ToolCallStatus.Success,
       contentWidth: 80,

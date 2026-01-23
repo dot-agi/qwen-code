@@ -298,8 +298,9 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
       | 'hidden'
       | undefined) ?? 'full';
 
-  // Check if this is an MCP tool by looking for "MCP Server" in the description
-  const isMcpTool = description?.includes('MCP Server') ?? false;
+  // Check if this is an MCP tool by looking for "MCP Server" in the name
+  // The name prop contains the displayName which has format: "toolName (serverName MCP Server)"
+  const isMcpTool = name?.includes('MCP Server') ?? false;
 
   const isThisShellFocused =
     (name === SHELL_COMMAND_NAME || name === 'Shell') &&
