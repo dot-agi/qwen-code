@@ -82,7 +82,9 @@ export class BugMessageHandler extends BaseMessageHandler {
     info.push(`VS Code Version: ${vscode.version}`);
 
     // Extension version (from package.json)
-    const extension = vscode.extensions.getExtension('anthropic.qwen-code');
+    const extension = vscode.extensions.getExtension(
+      'qwenlm.qwen-code-vscode-ide-companion',
+    );
     if (extension) {
       info.push(`Extension Version: ${extension.packageJSON.version}`);
     }
