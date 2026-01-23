@@ -17,9 +17,12 @@ vi.mock('vscode', () => ({
     openExternal: vi.fn().mockResolvedValue(true),
   },
   extensions: {
-    getExtension: vi.fn(() => ({
-      packageJSON: { version: '0.1.0' },
-    })),
+    getExtension: vi.fn((id: string) => {
+      if (id === 'qwenlm.qwen-code-vscode-ide-companion') {
+        return { packageJSON: { version: '0.1.0' } };
+      }
+      return undefined;
+    }),
   },
 }));
 
@@ -128,6 +131,26 @@ describe('BugMessageHandler', () => {
       expect(urlCall).toContain('github.com/QwenLM/qwen-code/issues/new');
       expect(urlCall).toContain('template=bug_report.yml');
       expect(urlCall).toContain('info=');
+    });
+
+    it('should include extension version in system info', async () => {
+      const vscode = await import('vscode');
+
+      await handler.handle({ type: 'bug' });
+
+      const urlCall = vi.mocked(vscode.Uri.parse).mock.calls[0][0];
+      expect(urlCall).toContain('Extension+Version');
+      expect(urlCall).toContain('0.1.0');
+    });
+
+    it('should include VS Code version in system info', async () => {
+      const vscode = await import('vscode');
+
+      await handler.handle({ type: 'bug' });
+
+      const urlCall = vi.mocked(vscode.Uri.parse).mock.calls[0][0];
+      expect(urlCall).toContain('VS+Code+Version');
+      expect(urlCall).toContain('1.85.0');
     });
   });
 });
