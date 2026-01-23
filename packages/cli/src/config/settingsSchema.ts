@@ -966,7 +966,7 @@ const SETTINGS_SCHEMA = {
         showInDialog: false,
       },
       outputMode: {
-        type: 'string',
+        type: 'enum',
         label: 'MCP Output Mode',
         category: 'MCP',
         requiresRestart: false,
