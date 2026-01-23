@@ -40,7 +40,14 @@ export class SchemaValidator {
     if (typeof data !== 'object' || data === null) {
       return 'Value of params must be an object';
     }
-    const validate = ajValidator.compile(schema);
+    // Strip $schema field as Ajv doesn't support all JSON Schema drafts (e.g., 2020-12)
+    // MCP tools often use newer schema drafts that Ajv can't validate
+    let schemaToValidate = schema;
+    if (typeof schema === 'object' && schema !== null && '$schema' in schema) {
+      const { $schema: _, ...rest } = schema as Record<string, unknown>;
+      schemaToValidate = rest;
+    }
+    const validate = ajValidator.compile(schemaToValidate);
     let valid = validate(data);
     if (!valid && validate.errors) {
       // Coerce string boolean values ("true"/"false") to actual booleans
