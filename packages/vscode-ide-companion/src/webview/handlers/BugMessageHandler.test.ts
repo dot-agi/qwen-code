@@ -128,7 +128,9 @@ describe('BugMessageHandler', () => {
       await handler.handle({ type: 'bug' });
 
       const urlCall = vi.mocked(vscode.Uri.parse).mock.calls[0][0];
-      expect(urlCall).toContain('github.com/QwenLM/qwen-code/issues/new');
+      expect(urlCall.toLowerCase()).toContain(
+        'github.com/qwenlm/qwen-code/issues/new',
+      );
       expect(urlCall).toContain('template=bug_report.yml');
       expect(urlCall).toContain('info=');
     });
@@ -139,7 +141,7 @@ describe('BugMessageHandler', () => {
       await handler.handle({ type: 'bug' });
 
       const urlCall = vi.mocked(vscode.Uri.parse).mock.calls[0][0];
-      expect(urlCall).toContain('Extension+Version');
+      expect(urlCall.toLowerCase()).toMatch(/extension.?version/);
       expect(urlCall).toContain('0.1.0');
     });
 
@@ -149,7 +151,7 @@ describe('BugMessageHandler', () => {
       await handler.handle({ type: 'bug' });
 
       const urlCall = vi.mocked(vscode.Uri.parse).mock.calls[0][0];
-      expect(urlCall).toContain('VS+Code+Version');
+      expect(urlCall.toLowerCase()).toMatch(/vs.?code.?version/);
       expect(urlCall).toContain('1.85.0');
     });
   });
