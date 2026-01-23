@@ -11,11 +11,13 @@ import { ToolMessage } from './ToolMessage.js';
 import { StreamingState, ToolCallStatus } from '../../types.js';
 import { Text } from 'ink';
 import { StreamingContext } from '../../contexts/StreamingContext.js';
+import { SettingsContext } from '../../contexts/SettingsContext.js';
 import type {
   AnsiOutput,
   AnsiOutputDisplay,
   Config,
 } from '@qwen-code/qwen-code-core';
+import type { LoadedSettings } from '../../../config/settings.js';
 
 vi.mock('../TerminalOutput.js', () => ({
   TerminalOutput: function MockTerminalOutput({
@@ -83,16 +85,34 @@ vi.mock('../subagents/index.js', () => ({
   },
 }));
 
+// Mock settings for testing
+const mockSettings = {
+  merged: {
+    hideTips: false,
+    theme: 'default',
+    ui: {
+      showStatusInTitle: false,
+      hideWindowTitle: false,
+    },
+    mcp: {
+      outputMode: 'full',
+    },
+  },
+} as unknown as LoadedSettings;
+
 // Helper to render with context
 const renderWithContext = (
   ui: React.ReactElement,
   streamingState: StreamingState,
+  settings: LoadedSettings = mockSettings,
 ) => {
   const contextValue: StreamingState = streamingState;
   return render(
-    <StreamingContext.Provider value={contextValue}>
-      {ui}
-    </StreamingContext.Provider>,
+    <SettingsContext.Provider value={settings}>
+      <StreamingContext.Provider value={contextValue}>
+        {ui}
+      </StreamingContext.Provider>
+    </SettingsContext.Provider>,
   );
 };
 
@@ -279,5 +299,113 @@ describe('<ToolMessage />', () => {
       StreamingState.Idle,
     );
     expect(lastFrame()).toContain('MockAnsiOutput:hello');
+  });
+
+  describe('MCP output mode', () => {
+    const mcpToolProps: ToolMessageProps = {
+      callId: 'mcp-tool-123',
+      name: 'web_search (web-search MCP Server)',
+      description: 'Search the web for information',
+      resultDisplay: 'This is a very long search result with lots of text...',
+      status: ToolCallStatus.Success,
+      contentWidth: 80,
+      confirmationDetails: undefined,
+      config: mockConfig,
+    };
+
+    it('shows full output for MCP tool when outputMode is "full"', () => {
+      const fullModeSettings = {
+        ...mockSettings,
+        merged: {
+          ...mockSettings.merged,
+          mcp: { outputMode: 'full' },
+        },
+      } as unknown as LoadedSettings;
+
+      const { lastFrame } = renderWithContext(
+        <ToolMessage {...mcpToolProps} />,
+        StreamingState.Idle,
+        fullModeSettings,
+      );
+
+      const output = lastFrame();
+      expect(output).toContain('web-search');
+      expect(output).toContain('MCP Server');
+      expect(output).toContain('This is a very long search result');
+    });
+
+    it('hides output for MCP tool when outputMode is "hidden"', () => {
+      const hiddenModeSettings = {
+        ...mockSettings,
+        merged: {
+          ...mockSettings.merged,
+          mcp: { outputMode: 'hidden' },
+        },
+      } as unknown as LoadedSettings;
+
+      const { lastFrame } = renderWithContext(
+        <ToolMessage {...mcpToolProps} />,
+        StreamingState.Idle,
+        hiddenModeSettings,
+      );
+
+      const output = lastFrame();
+      expect(output).toContain('web-search');
+      expect(output).toContain('MCP Server');
+      expect(output).not.toContain('This is a very long search result');
+    });
+
+    it('shows summary for MCP tool when outputMode is "summary"', () => {
+      const summaryModeSettings = {
+        ...mockSettings,
+        merged: {
+          ...mockSettings.merged,
+          mcp: { outputMode: 'summary' },
+        },
+      } as unknown as LoadedSettings;
+
+      const longResult =
+        'Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8';
+
+      const { lastFrame } = renderWithContext(
+        <ToolMessage {...mcpToolProps} resultDisplay={longResult} />,
+        StreamingState.Idle,
+        summaryModeSettings,
+      );
+
+      const output = lastFrame();
+      expect(output).toContain('web-search');
+      expect(output).toContain('Line 1');
+      expect(output).toContain('truncated');
+      expect(output).not.toContain('Line 8');
+    });
+
+    it('shows full output for non-MCP tool regardless of outputMode setting', () => {
+      const hiddenModeSettings = {
+        ...mockSettings,
+        merged: {
+          ...mockSettings.merged,
+          mcp: { outputMode: 'hidden' },
+        },
+      } as unknown as LoadedSettings;
+
+      // Non-MCP tool (no "MCP Server" in description)
+      const nonMcpToolProps: ToolMessageProps = {
+        ...baseProps,
+        name: 'read-file',
+        description: 'Read file contents',
+        resultDisplay: 'File content here',
+      };
+
+      const { lastFrame } = renderWithContext(
+        <ToolMessage {...nonMcpToolProps} />,
+        StreamingState.Idle,
+        hiddenModeSettings,
+      );
+
+      const output = lastFrame();
+      expect(output).toContain('read-file');
+      expect(output).toContain('File content here'); // Non-MCP tool should still show output
+    });
   });
 });
