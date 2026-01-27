@@ -120,7 +120,7 @@ describe('copyCommand', () => {
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
-      content: 'Last output copied to the clipboard',
+      content: 'Last output copied to clipboard (29 chars, 1 lines)',
     });
 
     expect(mockCopyToClipboard).toHaveBeenCalledWith(
@@ -147,7 +147,7 @@ describe('copyCommand', () => {
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
-      content: 'Last output copied to the clipboard',
+      content: 'Last output copied to clipboard (22 chars, 1 lines)',
     });
   });
 
@@ -159,7 +159,7 @@ describe('copyCommand', () => {
         role: 'model',
         parts: [
           { text: 'Text part' },
-          { image: 'base64data' }, // Non-text part
+          { image: 'base64data' },
           { text: ' more text' },
         ],
       },
@@ -174,7 +174,7 @@ describe('copyCommand', () => {
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
-      content: 'Last output copied to the clipboard',
+      content: 'Last output copied to clipboard (19 chars, 1 lines)',
     });
   });
 
@@ -205,7 +205,7 @@ describe('copyCommand', () => {
     expect(result).toEqual({
       type: 'message',
       messageType: 'info',
-      content: 'Last output copied to the clipboard',
+      content: 'Last output copied to clipboard (18 chars, 1 lines)',
     });
   });
 
@@ -261,7 +261,7 @@ describe('copyCommand', () => {
     const historyWithEmptyParts = [
       {
         role: 'model',
-        parts: [{ image: 'base64data' }], // No text parts
+        parts: [{ image: 'base64data' }],
       },
     ];
 
@@ -294,5 +294,51 @@ describe('copyCommand', () => {
     });
 
     expect(mockCopyToClipboard).not.toHaveBeenCalled();
+  });
+
+  it('should format large content with k chars notation', async () => {
+    if (!copyCommand.action) throw new Error('Command has no action');
+
+    const largeContent = 'x'.repeat(1500) + '\n' + 'y'.repeat(500);
+    const historyWithLargeContent = [
+      {
+        role: 'model',
+        parts: [{ text: largeContent }],
+      },
+    ];
+
+    mockGetHistory.mockReturnValue(historyWithLargeContent);
+    mockCopyToClipboard.mockResolvedValue(undefined);
+
+    const result = await copyCommand.action(mockContext, '');
+
+    expect(result).toEqual({
+      type: 'message',
+      messageType: 'info',
+      content: 'Last output copied to clipboard (2.0k chars, 2 lines)',
+    });
+  });
+
+  it('should count multiple lines correctly', async () => {
+    if (!copyCommand.action) throw new Error('Command has no action');
+
+    const multilineContent = 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5';
+    const historyWithMultilineContent = [
+      {
+        role: 'model',
+        parts: [{ text: multilineContent }],
+      },
+    ];
+
+    mockGetHistory.mockReturnValue(historyWithMultilineContent);
+    mockCopyToClipboard.mockResolvedValue(undefined);
+
+    const result = await copyCommand.action(mockContext, '');
+
+    expect(result).toEqual({
+      type: 'message',
+      messageType: 'info',
+      content: 'Last output copied to clipboard (34 chars, 5 lines)',
+    });
   });
 });
